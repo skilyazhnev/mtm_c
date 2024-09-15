@@ -214,7 +214,8 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     bool isnull;
     Datum values[3];
     char outp[256];
-    const char *work_mem_str, *num_str1, *num_str2;
+    const char *work_mem_str;
+    char *num_str1, *num_str2;
 
     /* Извлечение атрибутов из кортежа */
     for (int i = 1; i <= 3; i++) {
