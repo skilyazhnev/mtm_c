@@ -177,7 +177,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     PG_RETURN_TEXT_P(cstring_to_text(outp));
 }
 
-PG_FUNCTION_INFO_V1(n_final_mtm);
+PG_FUNCTION_INFO_V1(f_final_mtm);
 
 Datum
 f_final_mtm(PG_FUNCTION_ARGS) {
