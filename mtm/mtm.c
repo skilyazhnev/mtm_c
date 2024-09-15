@@ -31,7 +31,7 @@ n_transition_mtm(PG_FUNCTION_ARGS) {
           "that cannot accept type record")));
 
   for (int i = 1; i <= 3; i++) {
-    values[i - 1] = GetAttributeByNum(t, i, & isnull);
+    values[i - 1] = GetAttributeByNum(t, i, &isnull);
     if (isnull)
       isnullarr[i - 1] = isnull;
   }
@@ -81,9 +81,11 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     Datum values[3];
     bool isnullarr[3] = {0,0,0};
     HeapTuple tuple;
+    char outp[256];
+    const char *work_mem_str, *num_str1, *num_str2;
 
     for (int i = 1; i <= 3; i++) {
-      values[i - 1] = GetAttributeByNum(t, i, & isnull);
+      values[i - 1] = GetAttributeByNum(t, i, &isnull);
       if (isnull)
         isnullarr[i - 1] = isnull;
     }
@@ -92,13 +94,10 @@ n_final_mtm(PG_FUNCTION_ARGS) {
       PG_RETURN_NULL();
     }
 
-    char outp[256];
-    const char *work_mem_str;
-    
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
     
-    const char *num_str1 = numeric_normalize(DatumGetNumeric(values[0]));
-    const char *num_str2 = numeric_normalize(DatumGetNumeric(values[1]));
+    num_str1 = numeric_normalize(DatumGetNumeric(values[0]));
+    num_str2 = numeric_normalize(DatumGetNumeric(values[1]));
     
     // Безопасное форматирование строки с проверкой возвращаемого значения
     if (num_str1 != NULL && num_str2 != NULL) {
