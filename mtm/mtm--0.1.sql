@@ -25,11 +25,11 @@ CREATE TYPE f_state_mtm AS (
     cntr double precision
 );
 
-CREATE OR REPLACE FUNCTION f_transition_mtm(n_state_mtm, numeric) RETURNS n_state_mtm
+CREATE OR REPLACE FUNCTION f_transition_mtm(f_state_mtm, double precision) RETURNS f_state_mtm
     AS 'mtm', 'f_transition_mtm'
     LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION f_final_mtm(n_state_mtm) RETURNS text
+CREATE OR REPLACE FUNCTION f_final_mtm(f_state_mtm) RETURNS text
     AS 'mtm', 'f_final_mtm'
     LANGUAGE C STRICT;
 
