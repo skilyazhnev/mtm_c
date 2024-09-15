@@ -1,0 +1,5 @@
+default_version='0.1'
+relocatable = true
+encoding = UTF8
+comment = 'Aggregate to find min and max'
+module_pathname = '$libdir/mtm'
