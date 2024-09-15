@@ -33,7 +33,7 @@ CREATE OR REPLACE FUNCTION f_final_mtm(f_state_mtm) RETURNS text
     AS 'mtm', 'f_final_mtm'
     LANGUAGE C STRICT;
 
-CREATE OR REPLACE AGGREGATE max_to_min(numeric) (
+CREATE OR REPLACE AGGREGATE max_to_min(double precision) (
     stype     = f_state_mtm,
     initcond  = '(0,0,0)',
     sfunc     = f_transition_mtm,
