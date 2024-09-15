@@ -79,15 +79,11 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
     bool isnull;
     Datum values[3];
-    bool isnullarr[3] = {0,0,0};
-    HeapTuple tuple;
     char outp[256];
     const char *work_mem_str, *num_str1, *num_str2;
 
     for (int i = 1; i <= 3; i++) {
       values[i - 1] = GetAttributeByNum(t, i, &isnull);
-      if (isnull)
-        isnullarr[i - 1] = isnull;
     }
 
     if (DatumGetInt32(DirectFunctionCall2(numeric_cmp, values[2], NumericGetDatum(int64_to_numeric(0)))) == 0) {
