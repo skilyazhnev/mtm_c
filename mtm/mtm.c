@@ -230,8 +230,8 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
 
     /* Преобразуем значения double precision в строки */
-    num_str1 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[0])));
-    num_str2 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[1])));
+    num_str1 = psprintf("%lf", DatumGetFloat8(values[0]));
+    num_str2 = psprintf("%lf", DatumGetFloat8(values[1]));
     float_trim_zeros(num_str1);
     float_trim_zeros(num_str2);
 
