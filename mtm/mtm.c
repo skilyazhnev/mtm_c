@@ -232,6 +232,8 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     /* Преобразуем значения double precision в строки */
     num_str1 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[0])));
     num_str2 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[1])));
+    float_trim_zeros(num_str1);
+    float_trim_zeros(num_str2);
 
     /* Проверка на успешное преобразование и формирование выходной строки */
     if (num_str1 != NULL && num_str2 != NULL) {
