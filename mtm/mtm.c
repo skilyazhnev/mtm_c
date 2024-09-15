@@ -5,6 +5,26 @@
 #include "utils/guc.h" /* GetConfigOption */
 #include "utils/builtins.h" /* text stuff */
 #include "utils/numeric.h"
+#include <string.h> /* trim func */
+
+
+void float_trim_zeros(char *str) {
+    int len = strlen(str);
+
+    int i = len - 1;
+    while (i >= 0 && str[i] == '0') {
+        i--;
+    }
+    if (i >= 0 && str[i] == '.') {
+        i--;
+    }
+
+    str[i + 1] = '\0';
+
+    if (i < 0) {
+        strcpy(str, "0");
+    }
+}
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -165,7 +185,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     
    
     if (num_str1 != NULL && num_str2 != NULL) {
-        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str1, num_str2);
+        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str2, num_str1);
         if (res < 0 || res >= sizeof(outp)) {
             ereport(ERROR,
                     (errmsg("Error formatting output or buffer too small")));
@@ -210,12 +230,12 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
 
     /* Преобразуем значения double precision в строки */
-    num_str1 = psprintf("%lf", DatumGetFloat8(values[0]));
-    num_str2 = psprintf("%lf", DatumGetFloat8(values[1]));
+    num_str1 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[0])));
+    num_str2 = float_trim_zeros(psprintf("%lf", DatumGetFloat8(values[1])));
 
     /* Проверка на успешное преобразование и формирование выходной строки */
     if (num_str1 != NULL && num_str2 != NULL) {
-        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str1, num_str2);
+        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str2, num_str1);
         if (res < 0 || res >= sizeof(outp)) {
             ereport(ERROR,
                     (errmsg("Error formatting output or buffer too small")));
