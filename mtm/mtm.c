@@ -200,6 +200,7 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     char *outp;
     const char *work_mem_str;
     char *num_str1, *num_str2;
+    int specifier_count = 0;
 
     /* Извлечение атрибутов из кортежа */
     for (int i = 1; i <= 3; i++) {
@@ -213,6 +214,12 @@ f_final_mtm(PG_FUNCTION_ARGS) {
 
     /* Получаем строку формата вывода из конфигурации */
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
+
+    if (specifier_count > count_format_specifiers(work_mem_str)) {
+        ereport(ERROR,
+                (errmsg("Too many '%%s' format specifiers in format string. Expected no more than 2 (%d args)",
+                        specifier_count)));
+    }
 
     /* Преобразуем значения double precision в строки */
     num_str1 = psprintf("%lf", DatumGetFloat8(values[0]));
@@ -265,4 +272,16 @@ char* mtm_dynamic_sprintf(const char *format, ...) {
   va_end(args);
 
   return outp;
+}
+
+int count_format_specifiers(const char *format) {
+    int count = 0;
+    const char *temp = format;
+
+    while ((temp = strstr(temp, "%s")) != NULL) {
+        count++;
+        temp += 2;
+    }
+
+    return count;
 }
