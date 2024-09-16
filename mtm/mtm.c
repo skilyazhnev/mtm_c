@@ -264,13 +264,14 @@ void float_trim_zeros(char * str) {
 
 char* mtm_dynamic_sprintf(const char *format, ...) {
   int size_needed;
+  char *outp;
   va_list args;
 
   va_start(args, format);
   size_needed = vsnprintf(NULL, 0, format, args); 
   va_end(args);
 
-  char *outp = (char *) palloc(size_needed + 1);
+  outp = (char *) palloc(size_needed + 1);
 
   va_start(args, format);
   vsnprintf(outp, size_needed + 1, format, args);
