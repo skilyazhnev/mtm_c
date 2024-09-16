@@ -172,27 +172,40 @@ n_final_mtm(PG_FUNCTION_ARGS) {
           errmsg("function returning record called in context "
             "that cannot accept type record")));
 
+    /* Extract the state_mtm from function arguments */
     t = PG_GETARG_HEAPTUPLEHEADER(0);
 
+    /* Extract attributes from the tuple */
     for (int i = 1; i <= 3; i++) {
       values[i - 1] = GetAttributeByNum(t, i, &isnull);
     }
 
+    /* Check if the count value is zero and return NULL if true */
     if (DatumGetInt32(DirectFunctionCall2(numeric_cmp, values[2], NumericGetDatum(int64_to_numeric(0)))) == 0) {
       PG_RETURN_NULL();
     }
 
+    /* Get the output format string from configuration or use the default */
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: MTM_DEFAULT_OUTPUT_FORMAT;
-    
+
+    /* Check the number of format specifiers in the format string */
     if (specifier_count < count_format_specifiers(work_mem_str)) {
         ereport(ERROR,
                 (errmsg("Too many '%%s' format specifiers in format string. Expected no more than 2 (%d args)",
                         specifier_count)));
     }
 
+    /* Normalize numeric values to strings */
+    /* we can do somthing like 
+        v=PG_GETARG_NUMERIC(0);
+        r=numeric_normalize(v);
+        f=atof(r)*10; 
+        as option for arithmetics
+    */
     num_str1 = numeric_normalize(DatumGetNumeric(values[0]));
     num_str2 = numeric_normalize(DatumGetNumeric(values[1]));
-   
+
+    /* Format the output string using the dynamic sprintf function */
     if (num_str1 != NULL && num_str2 != NULL) {
         outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
@@ -205,6 +218,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
 
 PG_FUNCTION_INFO_V1(f_final_mtm);
 
+/* Function for final output formatting (for double precision data type) */
 Datum
 f_final_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
@@ -240,12 +254,15 @@ f_final_mtm(PG_FUNCTION_ARGS) {
                         specifier_count)));
     }
 
+    /* Convert numeric values to strings */
     num_str1 = psprintf("%lf", DatumGetFloat8(values[0]));
     num_str2 = psprintf("%lf", DatumGetFloat8(values[1]));
 
+    /* Trim trailing zeros from the string representations (like small copy of numeric_normalize) of the numbers */
     float_trim_zeros(num_str1);
     float_trim_zeros(num_str2);
 
+    /* Format the final output string using the specified format */
     if (num_str1 != NULL && num_str2 != NULL) {
         outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
@@ -256,13 +273,16 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     PG_RETURN_TEXT_P(cstring_to_text(outp));
 }
 
+/* Trims trailing zeros from a string representation of a floating-point number */
 void float_trim_zeros(char * str) {
   int len,i;
+  /* Check if the input string is NULL or empty; nothing to do in this case */
   if (str == NULL || * str == '\0') return;
 
-  len = strlen(str);
+  len = strlen(str); // Get the length of the string
 
-  i = len - 1;
+  i = len - 1;  // Start from the end of the string
+  /* Remove trailing zeros */
   while (i >= 0 && str[i] == '0') {
     i--;
   }
@@ -277,24 +297,33 @@ void float_trim_zeros(char * str) {
   }
 }
 
+/* Creates a formatted string with a variable number of arguments */
 char* mtm_dynamic_sprintf(const char *format, ...) {
-  int size_needed;
-  char *outp;
-  va_list args;
+  int size_needed; // Variable to hold the size of the formatted string
+  char *outp;      // Pointer to hold the formatted string
+  va_list args;    // Variable argument list for the formatted string
 
+  /* Initialize the argument list */
   va_start(args, format);
+  /* Determine the size needed for the formatted string */
   size_needed = vsnprintf(NULL, 0, format, args); 
+  /* Clean up the argument list */
   va_end(args);
 
-  outp = (char *) palloc(size_needed + 1);
+  /* Allocate memory for the formatted string */
+  outp = (char *) palloc(size_needed + 1); // +1 for the null terminator
 
+  /* Reinitialize the argument list */
   va_start(args, format);
+  /* Format the string into the allocated memory */
   vsnprintf(outp, size_needed + 1, format, args);
   va_end(args);
 
   return outp;
 }
 
+
+/* Counts the number of "%s" format specifiers in a format string */
 int count_format_specifiers(const char *format) {
     int count = 0;
     const char *temp = format;
@@ -303,6 +332,5 @@ int count_format_specifiers(const char *format) {
         count++;
         temp += 2;
     }
-
     return count;
 }
