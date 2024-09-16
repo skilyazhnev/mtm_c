@@ -8,7 +8,7 @@
 #include <string.h> /* trim func */
 
 #define MTM_MAX_ARGS_COUNT 2
-#define MTM_DEFAULT_OUTPUT_FORMAT "%s --> %s"
+#define MTM_DEFAULT_OUTPUT_FORMAT "%s -> %s"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
