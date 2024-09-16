@@ -7,28 +7,11 @@
 #include "utils/numeric.h"
 #include <string.h> /* trim func */
 
-
-void float_trim_zeros(char *str) {
-    int len = strlen(str);
-
-    int i = len - 1;
-    while (i >= 0 && str[i] == '0') {
-        i--;
-    }
-    if (i >= 0 && str[i] == '.') {
-        i--;
-    }
-
-    str[i + 1] = '\0';
-
-    if (i < 0) {
-        strcpy(str, "0");
-    }
-}
-
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
+
+void float_trim_zeros(char *str);
 
 PG_FUNCTION_INFO_V1(n_transition_mtm);
 
@@ -213,7 +196,7 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
     bool isnull;
     Datum values[3];
-    char outp[256];
+    char *outp;
     const char *work_mem_str;
     char *num_str1, *num_str2;
 
@@ -238,15 +221,47 @@ f_final_mtm(PG_FUNCTION_ARGS) {
 
     /* Проверка на успешное преобразование и формирование выходной строки */
     if (num_str1 != NULL && num_str2 != NULL) {
-        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str2, num_str1);
-        if (res < 0 || res >= sizeof(outp)) {
-            ereport(ERROR,
-                    (errmsg("Error formatting output or buffer too small")));
-        }
+        char *outp = dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
         ereport(ERROR,
                 (errmsg("Double precision to string conversion failed")));
     }
 
     PG_RETURN_TEXT_P(cstring_to_text(outp));
+}
+
+void float_trim_zeros(char * str) {
+  if (str == NULL || * str == '\0') return;
+
+  int len = strlen(str);
+
+  int i = len - 1;
+  while (i >= 0 && str[i] == '0') {
+    i--;
+  }
+  if (i >= 0 && str[i] == '.') {
+    i--;
+  }
+
+  str[i + 1] = '\0';
+
+  if (i < 0) {
+    strcpy(str, "0");
+  }
+}
+
+char* dynamic_sprintf(const char *format, ...) {
+  va_list args;
+
+  va_start(args, format);
+  int size_needed = vsnprintf(NULL, 0, format, args); 
+  va_end(args);
+
+  char *outp = (char *) palloc(size_needed + 1);
+
+  va_start(args, format);
+  vsnprintf(outp, size_needed + 1, format, args);
+  va_end(args);
+
+  return outp;
 }
