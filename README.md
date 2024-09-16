@@ -28,6 +28,8 @@ Aggregate function that generates a custom-formatted text for a given numerical 
 $ apt install gcc ;
 $ apt install make ;
 $ apt install postgresql-server-dev-15 ;
+# Not needed for the function itself—added only if you’re going to test that function in Docker.
+$ apt install git; 
 ```
 ### Installation
 In target server 
@@ -35,7 +37,7 @@ In target server
 $ git clone https://github.com/skilyazhnev/mtm_c.git
 $ cd ./mtm_c/mtm
 $ make ;
-$ sudo make install ;
+$ sudo make install ; # There’s no sudo in Docker; you can simply use su to switch to root.
 ```
 In target database run
 ```sql
