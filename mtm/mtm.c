@@ -144,19 +144,18 @@ PG_FUNCTION_INFO_V1(n_final_mtm);
 Datum
 n_final_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
-
-    if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_SCALAR)
-      ereport(ERROR,
-        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-          errmsg("function returning record called in context "
-            "that cannot accept type record")));
-
     HeapTupleHeader t;
     bool isnull;
     Datum values[3];
     char *outp;
     const char *work_mem_str, *num_str1, *num_str2;
     int specifier_count = 2;
+
+    if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_SCALAR)
+      ereport(ERROR,
+        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+          errmsg("function returning record called in context "
+            "that cannot accept type record")));
 
     t = PG_GETARG_HEAPTUPLEHEADER(0);
 
@@ -194,13 +193,6 @@ PG_FUNCTION_INFO_V1(f_final_mtm);
 Datum
 f_final_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
-
-    if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_SCALAR)
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("function returning scalar called in context "
-                        "that cannot accept type scalar")));
-
     HeapTupleHeader t ;
     bool isnull;
     Datum values[3];
@@ -208,6 +200,12 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     const char *work_mem_str;
     char *num_str1, *num_str2;
     int specifier_count = 2;
+
+    if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_SCALAR)
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("function returning scalar called in context "
+                        "that cannot accept type scalar")));
 
     t = PG_GETARG_HEAPTUPLEHEADER(0);
 
@@ -244,12 +242,12 @@ f_final_mtm(PG_FUNCTION_ARGS) {
 }
 
 void float_trim_zeros(char * str) {
-  int len;
+  int len,i;
   if (str == NULL || * str == '\0') return;
 
   len = strlen(str);
 
-  int i = len - 1;
+  i = len - 1;
   while (i >= 0 && str[i] == '0') {
     i--;
   }
@@ -265,10 +263,11 @@ void float_trim_zeros(char * str) {
 }
 
 char* mtm_dynamic_sprintf(const char *format, ...) {
+  int size_needed;
   va_list args;
 
   va_start(args, format);
-  int size_needed = vsnprintf(NULL, 0, format, args); 
+  size_needed = vsnprintf(NULL, 0, format, args); 
   va_end(args);
 
   char *outp = (char *) palloc(size_needed + 1);
