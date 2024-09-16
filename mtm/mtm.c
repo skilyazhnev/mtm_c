@@ -221,7 +221,7 @@ f_final_mtm(PG_FUNCTION_ARGS) {
 
     /* Проверка на успешное преобразование и формирование выходной строки */
     if (num_str1 != NULL && num_str2 != NULL) {
-        char *outp = dynamic_sprintf(work_mem_str, num_str2, num_str1);
+        outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
         ereport(ERROR,
                 (errmsg("Double precision to string conversion failed")));
@@ -250,7 +250,7 @@ void float_trim_zeros(char * str) {
   }
 }
 
-char* dynamic_sprintf(const char *format, ...) {
+char* mtm_dynamic_sprintf(const char *format, ...) {
   va_list args;
 
   va_start(args, format);
