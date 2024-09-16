@@ -7,6 +7,7 @@
 #include "utils/numeric.h"
 #include <string.h> /* trim func */
 
+/* Define constants for maximum number of arguments and default output format */
 #define MTM_MAX_ARGS_COUNT 2
 #define MTM_DEFAULT_OUTPUT_FORMAT "%s -> %s"
 
@@ -20,6 +21,7 @@ int count_format_specifiers(const char *format);
 
 PG_FUNCTION_INFO_V1(n_transition_mtm);
 
+/* Function for numeric transition (for numeric data type) */
 Datum
 n_transition_mtm(PG_FUNCTION_ARGS) {
 
@@ -28,28 +30,36 @@ n_transition_mtm(PG_FUNCTION_ARGS) {
   HeapTuple tuple;
   Numeric tbl_val;
   bool isnull;
-  Datum values[3] = {0,0,0};
+  Datum values[3] = {0,0,0}; /* Array to store attribute values */
   Datum result;
-  bool isnullarr[3] = {0,0,0};
+  bool isnullarr[3] = {0,0,0}; /* Array to track null values */
 
+  /* Extract the tuple and numeric value from function arguments */
   t = PG_GETARG_HEAPTUPLEHEADER(0);
   tbl_val = PG_GETARG_NUMERIC(1);
 
+  /* Verify that the return type is a composite type */
   if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_COMPOSITE)
     ereport(ERROR,
       (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
         errmsg("function returning record called in context "
           "that cannot accept type record")));
 
+  /* Extract attributes from the tuple and check for nulls */
   for (int i = 1; i <= 3; i++) {
     values[i - 1] = GetAttributeByNum(t, i, &isnull);
     if (isnull)
       isnullarr[i - 1] = isnull;
   }
 
+  /* Check if the numeric value is not null and not NaN */
   if (!PG_ARGISNULL(1) && !numeric_is_nan(tbl_val)) {
+    /* Compare numeric value with current table value and update if necessary.
+       I didn't check performance of DirectFunctionCall2 but just 
+       in case we have float8 realisation too
+     */
     if (DatumGetInt32(DirectFunctionCall2(numeric_cmp, values[2], NumericGetDatum(int64_to_numeric(0)))) != 0) {
-      if (!isnullarr[0]) {
+      if (!isnullarr[0]) { /*we can merge two ifs, but too spaghetti in one line*/
         if (DatumGetInt32(DirectFunctionCall2(numeric_cmp, values[0], NumericGetDatum(tbl_val))) > 0) {
           values[0] = NumericGetDatum(tbl_val);
         }
@@ -60,12 +70,14 @@ n_transition_mtm(PG_FUNCTION_ARGS) {
         }
       }
     } else if (!isnullarr[2] ) {
+      /* If values[2] (cntr) is zero (first call), update all values and increment the count */
       values[0] = NumericGetDatum(tbl_val);
       values[1] = NumericGetDatum(tbl_val);
       values[2] = NumericGetDatum(DirectFunctionCall2(numeric_add, values[2], NumericGetDatum(int64_to_numeric(1))));
     }
   }
 
+  /* Create a new tuple with the updated values */
   tupdesc = BlessTupleDesc(tupdesc);
   tuple = heap_form_tuple(tupdesc, values, isnullarr);
   result = HeapTupleGetDatum(tuple);
@@ -75,6 +87,7 @@ n_transition_mtm(PG_FUNCTION_ARGS) {
 
 PG_FUNCTION_INFO_V1(f_transition_mtm);
 
+/* Function for float transition (for double precision data type) */
 Datum
 f_transition_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
@@ -82,19 +95,22 @@ f_transition_mtm(PG_FUNCTION_ARGS) {
     HeapTuple tuple;
     double tbl_val; 
     bool isnull;
-    Datum values[3] = {0, 0, 0}; 
+    Datum values[3] = {0, 0, 0};  /* Array to store attribute values */
     Datum result;
-    bool isnullarr[3] = {false, false, false}; 
+    bool isnullarr[3] = {false, false, false};  /* Array to track null values */
 
+    /* Extract the tuple and double value from function arguments */
     t = PG_GETARG_HEAPTUPLEHEADER(0);
     tbl_val = PG_GETARG_FLOAT8(1); 
 
+    /* Verify that the return type is a composite type */
     if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("function returning record called in context "
                         "that cannot accept type record")));
 
+    /* Extract attributes from the tuple and check for nulls */
     for (int i = 1; i <= 3; i++) {
         values[i - 1] = GetAttributeByNum(t, i, &isnull);
         if (isnull) {
@@ -102,39 +118,33 @@ f_transition_mtm(PG_FUNCTION_ARGS) {
         }
     }
 
-
+    /* Check if the double value is not null */
     if (!PG_ARGISNULL(1)) {
-
+        /* Compare double value with existing values and update if necessary */
         if (DatumGetFloat8(values[2]) != 0) {
 
-            if (!isnullarr[0]) {
+            if (!isnullarr[0]) { /*we can merge two ifs, but too spaghetti in one line*/
                 if (DatumGetFloat8(values[0]) > tbl_val) {
                     values[0] = Float8GetDatum(tbl_val); 
                 }
-            } else {
-
-                values[0] = Float8GetDatum(tbl_val);
-                isnullarr[0] = false;
-            }
+            } 
 
             if (!isnullarr[1]) {
+               /* we checking on NULL here, but that no make a lot sense (0,0,0), 
+                if needed performance impruvment we can remove it */
                 if (DatumGetFloat8(values[1]) < tbl_val) {
                     values[1] = Float8GetDatum(tbl_val); 
                 }
-            } else {
-
-                values[1] = Float8GetDatum(tbl_val);
-                isnullarr[1] = false;
-            }
+            } 
         } else if (!isnullarr[2]) {
-
+           /* If values[2] (cntr) is zero (first call), update all values and increment the count */
             values[0] = Float8GetDatum(tbl_val);
             values[1] = Float8GetDatum(tbl_val);
             values[2] = Float8GetDatum(DatumGetFloat8(values[2]) + 1); 
         }
     }
 
-    /* Обработка результата кортежа */
+    /* Create a new tuple with the updated values */
     tupdesc = BlessTupleDesc(tupdesc);
     tuple = heap_form_tuple(tupdesc, values, isnullarr);
     result = HeapTupleGetDatum(tuple);
@@ -144,6 +154,7 @@ f_transition_mtm(PG_FUNCTION_ARGS) {
 
 PG_FUNCTION_INFO_V1(n_final_mtm);
 
+/* Function for final output formatting (for numeric data type) */
 Datum
 n_final_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
@@ -154,6 +165,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     const char *work_mem_str, *num_str1, *num_str2;
     int specifier_count = MTM_MAX_ARGS_COUNT;
 
+    /* Verify that the return type is scalar */
     if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_SCALAR)
       ereport(ERROR,
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

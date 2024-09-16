@@ -2,6 +2,16 @@
 
 Aggregate function that generates a custom-formatted text for a given numerical column, displaying the minimum and maximum values of that column.
 
+- [max\_to\_min() agreegate func on C](#max_to_min-agreegate-func-on-c)
+  - [Limitation](#limitation)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation-1)
+  - [Configuration](#configuration)
+  - [Examples](#examples)
+  - [Tests](#tests)
+  - [Notes](#notes)
+
 ## Limitation
 
 -  Only number types
@@ -9,6 +19,17 @@ Aggregate function that generates a custom-formatted text for a given numerical 
 
 ## Installation
 
+### Prerequisites
+- Tested in
+  - Extension  public docker container `postgres:15`
+  - OS: `Debian GNU/Linux 12 (bookworm)`
+
+```bash
+$ apt install gcc ;
+$ apt install make ;
+$ apt install postgresql-server-dev-15 ;
+```
+### Installation
 In target server 
 ```bash
 $ git clone https://github.com/skilyazhnev/mtm_c.git
