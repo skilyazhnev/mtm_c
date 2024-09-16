@@ -151,12 +151,14 @@ n_final_mtm(PG_FUNCTION_ARGS) {
           errmsg("function returning record called in context "
             "that cannot accept type record")));
 
-    HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
+    HeapTupleHeader t;
     bool isnull;
     Datum values[3];
     char *outp;
     const char *work_mem_str, *num_str1, *num_str2;
     int specifier_count = 2;
+
+    t = PG_GETARG_HEAPTUPLEHEADER(0);
 
     for (int i = 1; i <= 3; i++) {
       values[i - 1] = GetAttributeByNum(t, i, &isnull);
@@ -178,12 +180,12 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     num_str2 = numeric_normalize(DatumGetNumeric(values[1]));
    
     if (num_str1 != NULL && num_str2 != NULL) {
-          outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
-        }
+        outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
         ereport(ERROR,
-                (errmsg("Numeric normalization failed")));
+                (errmsg("Double precision to string conversion failed")));
     }
+
     PG_RETURN_TEXT_P(cstring_to_text(outp));
 }
 
@@ -199,13 +201,15 @@ f_final_mtm(PG_FUNCTION_ARGS) {
                  errmsg("function returning scalar called in context "
                         "that cannot accept type scalar")));
 
-    HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
+    HeapTupleHeader t ;
     bool isnull;
     Datum values[3];
     char *outp;
     const char *work_mem_str;
     char *num_str1, *num_str2;
     int specifier_count = 2;
+
+    t = PG_GETARG_HEAPTUPLEHEADER(0);
 
     for (int i = 1; i <= 3; i++) {
         values[i - 1] = GetAttributeByNum(t, i, &isnull);
