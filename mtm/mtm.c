@@ -21,13 +21,16 @@ Datum
 n_transition_mtm(PG_FUNCTION_ARGS) {
 
   TupleDesc tupdesc;
-  HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
+  HeapTupleHeader t;
   HeapTuple tuple;
-  Numeric tbl_val = PG_GETARG_NUMERIC(1);
+  Numeric tbl_val;
   bool isnull;
   Datum values[3] = {0,0,0};
   Datum result;
   bool isnullarr[3] = {0,0,0};
+
+  t = PG_GETARG_HEAPTUPLEHEADER(0);
+  tbl_val = PG_GETARG_NUMERIC(1);
 
   if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_COMPOSITE)
     ereport(ERROR,
@@ -72,14 +75,16 @@ PG_FUNCTION_INFO_V1(f_transition_mtm);
 Datum
 f_transition_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
-    HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
+    HeapTupleHeader t;
     HeapTuple tuple;
-    double tbl_val = PG_GETARG_FLOAT8(1); 
+    double tbl_val; 
     bool isnull;
     Datum values[3] = {0, 0, 0}; 
     Datum result;
     bool isnullarr[3] = {false, false, false}; 
 
+    t = PG_GETARG_HEAPTUPLEHEADER(0);
+    tbl_val = PG_GETARG_FLOAT8(1); 
 
     if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
         ereport(ERROR,
@@ -108,7 +113,6 @@ f_transition_mtm(PG_FUNCTION_ARGS) {
                 values[0] = Float8GetDatum(tbl_val);
                 isnullarr[0] = false;
             }
-
 
             if (!isnullarr[1]) {
                 if (DatumGetFloat8(values[1]) < tbl_val) {
@@ -188,7 +192,6 @@ Datum
 f_final_mtm(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc;
 
-    /* Проверка типа результата функции */
     if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_SCALAR)
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -203,17 +206,14 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     char *num_str1, *num_str2;
     int specifier_count = 2;
 
-    /* Извлечение атрибутов из кортежа */
     for (int i = 1; i <= 3; i++) {
         values[i - 1] = GetAttributeByNum(t, i, &isnull);
     }
 
-    /* Проверка: если счётчик равен 0, возвращаем NULL */
     if (DatumGetFloat8(values[2]) == 0) {
         PG_RETURN_NULL();
     }
 
-    /* Получаем строку формата вывода из конфигурации */
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
 
     if (specifier_count < count_format_specifiers(work_mem_str)) {
@@ -222,13 +222,12 @@ f_final_mtm(PG_FUNCTION_ARGS) {
                         specifier_count)));
     }
 
-    /* Преобразуем значения double precision в строки */
     num_str1 = psprintf("%lf", DatumGetFloat8(values[0]));
     num_str2 = psprintf("%lf", DatumGetFloat8(values[1]));
+
     float_trim_zeros(num_str1);
     float_trim_zeros(num_str2);
 
-    /* Проверка на успешное преобразование и формирование выходной строки */
     if (num_str1 != NULL && num_str2 != NULL) {
         outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
     } else {
@@ -240,9 +239,10 @@ f_final_mtm(PG_FUNCTION_ARGS) {
 }
 
 void float_trim_zeros(char * str) {
+  int len;
   if (str == NULL || * str == '\0') return;
 
-  int len = strlen(str);
+  len = strlen(str);
 
   int i = len - 1;
   while (i >= 0 && str[i] == '0') {
