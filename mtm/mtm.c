@@ -61,9 +61,7 @@ n_transition_mtm(PG_FUNCTION_ARGS) {
   }
 
   tupdesc = BlessTupleDesc(tupdesc);
-
   tuple = heap_form_tuple(tupdesc, values, isnullarr);
-
   result = HeapTupleGetDatum(tuple);
 
   PG_RETURN_DATUM(result);
@@ -165,15 +163,17 @@ n_final_mtm(PG_FUNCTION_ARGS) {
 
     work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
     
+    if (specifier_count < count_format_specifiers(work_mem_str)) {
+        ereport(ERROR,
+                (errmsg("Too many '%%s' format specifiers in format string. Expected no more than 2 (%d args)",
+                        specifier_count)));
+    }
+
     num_str1 = numeric_normalize(DatumGetNumeric(values[0]));
     num_str2 = numeric_normalize(DatumGetNumeric(values[1]));
-    
    
     if (num_str1 != NULL && num_str2 != NULL) {
-        int res = snprintf(outp, sizeof(outp), work_mem_str, num_str2, num_str1);
-        if (res < 0 || res >= sizeof(outp)) {
-            ereport(ERROR,
-                    (errmsg("Error formatting output or buffer too small")));
+          outp = mtm_dynamic_sprintf(work_mem_str, num_str2, num_str1);
         }
     } else {
         ereport(ERROR,
