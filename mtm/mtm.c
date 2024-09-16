@@ -7,6 +7,9 @@
 #include "utils/numeric.h"
 #include <string.h> /* trim func */
 
+#define MTM_MAX_ARGS_COUNT 2
+#define MTM_DEFAULT_OUTPUT_FORMAT "%s --> %s"
+
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
@@ -149,7 +152,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     Datum values[3];
     char *outp;
     const char *work_mem_str, *num_str1, *num_str2;
-    int specifier_count = 2;
+    int specifier_count = MTM_MAX_ARGS_COUNT;
 
     if (get_call_result_type(fcinfo, NULL, & tupdesc) != TYPEFUNC_SCALAR)
       ereport(ERROR,
@@ -167,7 +170,7 @@ n_final_mtm(PG_FUNCTION_ARGS) {
       PG_RETURN_NULL();
     }
 
-    work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
+    work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: MTM_DEFAULT_OUTPUT_FORMAT;
     
     if (specifier_count < count_format_specifiers(work_mem_str)) {
         ereport(ERROR,
@@ -199,7 +202,7 @@ f_final_mtm(PG_FUNCTION_ARGS) {
     char *outp;
     const char *work_mem_str;
     char *num_str1, *num_str2;
-    int specifier_count = 2;
+    int specifier_count = MTM_MAX_ARGS_COUNT;
 
     if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_SCALAR)
         ereport(ERROR,
@@ -217,11 +220,11 @@ f_final_mtm(PG_FUNCTION_ARGS) {
         PG_RETURN_NULL();
     }
 
-    work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: "%s --> %s";
+    work_mem_str = GetConfigOption("mtm.output_format", true, false) ?: MTM_DEFAULT_OUTPUT_FORMAT;
 
     if (specifier_count < count_format_specifiers(work_mem_str)) {
         ereport(ERROR,
-                (errmsg("Too many '%%s' format specifiers in format string. Expected no more than 2 (%d args)",
+                (errmsg("Too many '%%s' format specifiers in format string. Expected no more than %d args)",
                         specifier_count)));
     }
 
