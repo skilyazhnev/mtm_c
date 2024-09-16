@@ -154,8 +154,9 @@ n_final_mtm(PG_FUNCTION_ARGS) {
     HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
     bool isnull;
     Datum values[3];
-    char outp[256];
+    char *outp;
     const char *work_mem_str, *num_str1, *num_str2;
+    int specifier_count = 2;
 
     for (int i = 1; i <= 3; i++) {
       values[i - 1] = GetAttributeByNum(t, i, &isnull);
