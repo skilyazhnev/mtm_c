@@ -12,7 +12,7 @@ PG_MODULE_MAGIC;
 #endif
 
 void float_trim_zeros(char *str);
-char* dynamic_sprintf(const char *format, ...);
+char* mtm_dynamic_sprintf(const char *format, ...);
 
 PG_FUNCTION_INFO_V1(n_transition_mtm);
 
